@@ -133,7 +133,7 @@ void daemonize() {
 
 int main() {
 
-    //daemonize(); 데몬화 시 makefile 확인할 것
+    daemonize(); //데몬화 시 makefile 확인할 것
 
     signal(SIGINT, signal_handler);
 
