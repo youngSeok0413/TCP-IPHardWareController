@@ -17,7 +17,8 @@
 #define TIMEOUT_SECONDS 30
 #define MAX_CLIENTS 1024
 
-typedef struct {
+typedef struct
+{
     int fd;
     time_t last_active;
     char userid[20];
@@ -26,13 +27,17 @@ typedef struct {
 static int listen_fd = -1;
 static int epoll_fd = -1;
 
-char authorized_userid[20] = {0, };
+char authorized_userid[20] = {
+    0,
+};
 static client_session clients[MAX_CLIENTS];
 
-int setup_server_socket(int *out_listen_fd) {
+int setup_server_socket(int *out_listen_fd)
+{
     struct sockaddr_in server_addr;
     int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) {
+    if (fd < 0)
+    {
         perror("socket()");
         return -1;
     }
@@ -45,13 +50,15 @@ int setup_server_socket(int *out_listen_fd) {
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(SERVER_PORT);
 
-    if (bind(fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (bind(fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    {
         perror("bind()");
         close(fd);
         return -1;
     }
 
-    if (listen(fd, SOMAXCONN) < 0) {
+    if (listen(fd, SOMAXCONN) < 0)
+    {
         perror("listen()");
         close(fd);
         return -1;
@@ -62,9 +69,11 @@ int setup_server_socket(int *out_listen_fd) {
     return 0;
 }
 
-int setup_epoll(int lfd) {
+int setup_epoll(int lfd)
+{
     int efd = epoll_create1(0);
-    if (efd == -1) {
+    if (efd == -1)
+    {
         perror("epoll_create1()");
         return -1;
     }
@@ -73,7 +82,8 @@ int setup_epoll(int lfd) {
     ev.events = EPOLLIN;
     ev.data.fd = lfd;
 
-    if (epoll_ctl(efd, EPOLL_CTL_ADD, lfd, &ev) < 0) {
+    if (epoll_ctl(efd, EPOLL_CTL_ADD, lfd, &ev) < 0)
+    {
         perror("epoll_ctl()");
         close(efd);
         return -1;
@@ -83,16 +93,21 @@ int setup_epoll(int lfd) {
     return efd;
 }
 
-static int set_nonblocking(int fd) {
+static int set_nonblocking(int fd)
+{
     int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1) return -1;
+    if (flags == -1)
+        return -1;
     return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
-/*New Client*/ 
-static void add_client_session(int fd) {
-    for (int i = 0; i < MAX_CLIENTS; ++i) {
-        if (clients[i].fd == 0) {
+/*New Client*/
+static void add_client_session(int fd)
+{
+    for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i].fd == 0)
+        {
             clients[i].fd = fd;
             clients[i].last_active = time(NULL);
             clients[i].userid[0] = '\0';
@@ -101,18 +116,24 @@ static void add_client_session(int fd) {
     }
 }
 
-static void update_client_activity(int fd) {
-    for (int i = 0; i < MAX_CLIENTS; ++i) {
-        if (clients[i].fd == fd) {
+static void update_client_activity(int fd)
+{
+    for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i].fd == fd)
+        {
             clients[i].last_active = time(NULL);
             break;
         }
     }
 }
 
-static void update_client_userid(int fd, const char *userid) {
-    for (int i = 0; i < MAX_CLIENTS; ++i) {
-        if (clients[i].fd == fd && clients[i].userid[0] == '\0') {
+static void update_client_userid(int fd, const char *userid)
+{
+    for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i].fd == fd && clients[i].userid[0] == '\0')
+        {
             strncpy(clients[i].userid, userid, sizeof(clients[i].userid) - 1);
             clients[i].userid[sizeof(clients[i].userid) - 1] = '\0';
             break;
@@ -120,9 +141,12 @@ static void update_client_userid(int fd, const char *userid) {
     }
 }
 
-static void remove_client_session(int fd) {
-    for (int i = 0; i < MAX_CLIENTS; ++i) {
-        if (clients[i].fd == fd) {
+static void remove_client_session(int fd)
+{
+    for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i].fd == fd)
+        {
             clients[i].fd = 0;
             clients[i].last_active = 0;
             clients[i].userid[0] = '\0';
@@ -131,12 +155,14 @@ static void remove_client_session(int fd) {
     }
 }
 
-void handle_new_connection(int efd, int lfd) {
+void handle_new_connection(int efd, int lfd)
+{
     struct sockaddr_in client_addr;
     socklen_t addrlen = sizeof(client_addr);
 
     int client_fd = accept(lfd, (struct sockaddr *)&client_addr, &addrlen);
-    if (client_fd < 0) {
+    if (client_fd < 0)
+    {
         perror("accept()");
         return;
     }
@@ -150,7 +176,8 @@ void handle_new_connection(int efd, int lfd) {
     ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = client_fd;
 
-    if (epoll_ctl(efd, EPOLL_CTL_ADD, client_fd, &ev) < 0) {
+    if (epoll_ctl(efd, EPOLL_CTL_ADD, client_fd, &ev) < 0)
+    {
         perror("epoll_ctl() - client_fd");
         close(client_fd);
         return;
@@ -219,27 +246,32 @@ void handle_client_data(int efd, int client_fd, char* cntrl) {
     freeTokens(tokens, count);
 }
 
-
-int sendStrTCPIP(int sockfd, const char *msg) {
+int sendStrTCPIP(int sockfd, const char *msg)
+{
     size_t len = strlen(msg);
     ssize_t sent = send(sockfd, msg, len, 0);
     return (sent == (ssize_t)len) ? 0 : -1;
 }
 
-int recvStrTCPIP(int sockfd, char *buf, size_t bufsize) {
+int recvStrTCPIP(int sockfd, char *buf, size_t bufsize)
+{
     int n = recv(sockfd, buf, bufsize - 1, 0);
-    if (n > 0) {
+    if (n > 0)
+    {
         buf[n] = '\0';
     }
     return n;
 }
 
-void cleanup() {
-    if (listen_fd != -1) {
+void cleanup()
+{
+    if (listen_fd != -1)
+    {
         close(listen_fd);
         listen_fd = -1;
     }
-    if (epoll_fd != -1) {
+    if (epoll_fd != -1)
+    {
         close(epoll_fd);
         epoll_fd = -1;
     }
@@ -254,17 +286,21 @@ void signal_handler(int sig) {
 }
 */
 
-void check_timeouts(int efd) {
+void check_timeouts(int efd)
+{
     time_t now = time(NULL);
-    for (int i = 0; i < MAX_CLIENTS; ++i) {
-        if (clients[i].fd != 0 && difftime(now, clients[i].last_active) > TIMEOUT_SECONDS) {
+    for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i].fd != 0 && difftime(now, clients[i].last_active) > TIMEOUT_SECONDS)
+        {
             int fd = clients[i].fd;
             printf("타임아웃 발생: 클라이언트(fd: %d, userid: %s) 연결 해제\n", fd, clients[i].userid);
 
             epoll_ctl(efd, EPOLL_CTL_DEL, fd, NULL);
             close(fd);
 
-            if (strcmp(clients[i].userid, authorized_userid) == 0) {
+            if (strcmp(clients[i].userid, authorized_userid) == 0)
+            {
                 printf("authorized_userid 초기화됨 (timeout 발생)\n");
                 memset(authorized_userid, 0, sizeof(authorized_userid));
             }
@@ -273,4 +309,3 @@ void check_timeouts(int efd) {
         }
     }
 }
-
