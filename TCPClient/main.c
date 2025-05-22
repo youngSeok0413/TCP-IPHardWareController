@@ -110,7 +110,7 @@ char prepareMessage() {
     scanf(" %c", &command);
 
     if (command == 'c') {
-        printf("LED 세기 입력 (x, 1, 2, 3 중 하나): ");
+        printf("LED 세기 입력 (x, 0(toggle), 1(weak), 2(normal), 3(strong) 중 하나): ");
         scanf(" %c", &led);
 
         printf("부저 ON/OFF 입력 (x, 0: OFF, 1: ON): ");

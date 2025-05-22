@@ -29,6 +29,10 @@ TARGET = tcp_server
 # rpath 설정
 RPATH = -Wl,-rpath=.
 
+# WiringPi 라이브러리 및 경로
+WIRINGPI_LIB = -lwiringPi
+# 필요 시 경로 지정: 예) WIRINGPI_INC = -I/usr/local/include, WIRINGPI_LIBDIR = -L/usr/local/lib
+
 .PHONY: all clean
 
 all: $(TARGET)
@@ -37,9 +41,9 @@ all: $(TARGET)
 $(TARGET): $(SHARED_LIB) $(STATIC_LIB) $(MAIN_OBJ)
 	$(CC) -o $@ $(MAIN_OBJ) -L. -lcore -L. -ldevice $(RPATH)
 
-# 공유 라이브러리 빌드
+# 공유 라이브러리 빌드 (WiringPi 링크 포함)
 $(SHARED_LIB): $(DEVICE_OBJ)
-	$(CC) -shared -o $@ $^
+	$(CC) -shared -o $@ $^ $(WIRINGPI_LIB)
 
 # 정적 라이브러리 빌드
 $(STATIC_LIB): $(CORE_OBJ)

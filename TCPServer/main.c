@@ -79,7 +79,61 @@ void launch_child(int index, void (*child_func)(int, int), int epoll_fd) {
     }
 }
 
+void daemonize() {
+    pid_t pid = fork();
+
+    if (pid < 0) {
+        perror("1차 fork 실패");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid > 0) {
+        // 부모 종료
+        exit(EXIT_SUCCESS);
+    }
+
+    // 세션 리더가 되어 터미널과 분리
+    if (setsid() < 0) {
+        perror("setsid 실패");
+        exit(EXIT_FAILURE);
+    }
+
+    // 두 번째 fork
+    pid = fork();
+    if (pid < 0) {
+        perror("2차 fork 실패");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid > 0) {
+        // 두 번째 부모 프로세스 종료
+        exit(EXIT_SUCCESS);
+    }
+
+    // 파일 권한 마스크 설정
+    umask(0);
+
+    // 루트 디렉터리로 이동
+    if (chdir("/") < 0) {
+        perror("chdir 실패");
+        exit(EXIT_FAILURE);
+    }
+
+    // 표준 입출력 닫기
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+
+    // /dev/null로 리디렉션 (선택 사항)
+    open("/dev/null", O_RDONLY); // stdin
+    open("/dev/null", O_WRONLY); // stdout
+    open("/dev/null", O_RDWR);   // stderr
+}
+
 int main() {
+
+    //daemonize(); 데몬화 시 makefile 확인할 것
+
     signal(SIGINT, signal_handler);
 
     int listen_fd;
