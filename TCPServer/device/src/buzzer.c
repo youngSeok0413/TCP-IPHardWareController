@@ -8,6 +8,8 @@
 #include <wiringPi.h>
 #include <softTone.h>
 
+#define BZR 29 //pin
+
 void buzzerMain(int write_fd, int read_fd)
 {
     char buffer[2];

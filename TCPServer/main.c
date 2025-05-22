@@ -16,6 +16,7 @@
 
 char g_devNextStat[3] = {'x', 'x', 'x'};
 char g_devNextStat_buffer[3] = {'x', 'x', 'x'};
+char g_daynight = 'd';
 
 int parent_to_child[NUM_DEVICES][2];
 int child_to_parent[NUM_DEVICES][2];
@@ -180,7 +181,13 @@ int main() {
                         ssize_t len = read(fd, buf, sizeof(buf) - 1);
                         if (len > 0) {
                             buf[len] = '\0';
-                            printf("자식[%d] 출력: %s, %d \n", j, buf, strlen(buf));
+                            
+                            if(buf[0] == 'd'){
+                                g_daynight = 'd';
+                            }
+                            else{
+                                g_daynight = 'n';
+                            }
                         }
                         is_child_pipe = 1;
                         break;

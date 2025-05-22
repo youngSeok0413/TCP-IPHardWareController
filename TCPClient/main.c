@@ -113,10 +113,10 @@ char prepareMessage() {
         printf("LED 세기 입력 (x(입력 없음), 0(toggle), 1(weak), 2(normal), 3(strong) 중 하나): ");
         scanf(" %c", &led);
 
-        printf("부저 ON/OFF 입력 (x(입력 없음), 0: OFF, 1: ON): ");
+        printf("부저 ON/OFF 입력 (x(입력 없음), 0: 정지, 1: 재생): ");
         scanf(" %c", &buzzer);
 
-        printf("타이머 설정 (x(입력 없음), 0 ~ 9 숫자(시간)): ");
+        printf("타이머 설정 (x(입력 없음), 0 ~ 9 숫자(초)): ");
         scanf(" %d", &timer);
 
         snprintf(send_msg, sizeof(send_msg), "%s:%c:%c:%c:%d",

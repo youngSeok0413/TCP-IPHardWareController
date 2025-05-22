@@ -234,7 +234,13 @@ void handle_client_data(int efd, int client_fd, char* cntrl) {
         printf("state : %c%c%c\r\n", 
             cntrl[0],cntrl[1],cntrl[2]);
 
-        sendStrTCPIP(client_fd, buffer); // Echo
+        extern char g_daynight;
+        if(g_daynight == 'd'){
+            sendStrTCPIP(client_fd, "Day"); // Echo
+        }
+        else{
+            sendStrTCPIP(client_fd, "Night"); // Echo
+        }
         
         //fork(p - tcp server), (c - device), messageque
 

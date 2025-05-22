@@ -1,8 +1,6 @@
 #ifndef BUZZER_H
 #define BUZZER_H
 
-#define BZR 29 //pin
-
 // 음계 정의 (주요 음)
 #define NOTE_B0 31
 #define NOTE_C1 33
