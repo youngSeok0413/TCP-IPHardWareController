@@ -8,6 +8,8 @@
 #include <wiringPi.h> // wiringPi 관련 함수들
 #include <softPwm.h>  // softPwm 함수
 
+#include "logger.h"
+
 #define LED 5
 #define CDS 6
 
@@ -50,20 +52,32 @@ void ledMain(int write_fd, int read_fd)
                     {
                     case '0':
                         onoff = !onoff;
+                        log_init(LOG_FILE_PATH);
+                        log_message(LOG_LEVEL_INFO, "LED TOGGLE");
+                        log_close();
                         break;
 
                     case '1':
                         strength = WEAK;
+                        log_init(LOG_FILE_PATH);
+                        log_message(LOG_LEVEL_INFO, "LED:WEAK");
+                        log_close();
                         onoff = true;
                         break;
 
                     case '2':
                         strength = NORMAL;
+                        log_init(LOG_FILE_PATH);
+                        log_message(LOG_LEVEL_INFO, "LED:NORMAL");
+                        log_close();
                         onoff = true;
                         break;
 
                     case '3':
                         strength = STRONG;
+                        log_init(LOG_FILE_PATH);
+                        log_message(LOG_LEVEL_INFO, "LED:STRONG");
+                        log_close();
                         onoff = true;
                         break;
                     }

@@ -9,6 +9,8 @@
 #include <wiringPi.h>
 #include <softTone.h>
 
+#include "logger.h"
+
 #define BZR 29 // pin
 
 void segMain(int write_fd, int read_fd)
@@ -44,6 +46,9 @@ void segMain(int write_fd, int read_fd)
                     if (buffer[0] != 'x')
                     {
                         countdown = buffer[0] - '0';
+                        log_init(LOG_FILE_PATH);
+                        log_message(LOG_LEVEL_INFO, "TIMER:%d", countdown);
+                        log_close();
                         fndControl(countdown);
                     } 
                     else{

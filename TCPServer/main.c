@@ -1,4 +1,3 @@
-#include "tcpip.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -8,6 +7,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+#include "tcpip.h"
+//#include "logger.h"
 #include "device/include/led.h"
 #include "device/include/buzzer.h"
 #include "device/include/sevenseg.h"
@@ -32,6 +33,7 @@ void signal_handler(int signo) {
     }
 
     cleanup();
+    //close_logging();
     exit(EXIT_SUCCESS);
 }
 
@@ -139,7 +141,7 @@ int main() {
 
     int listen_fd;
     if (setup_server_socket(&listen_fd) < 0) {
-        fprintf(stderr, "서버 소켓 설정 실패\n");
+        //sys(stderr, "서버 소켓 설정 실패\n");
         return EXIT_FAILURE;
     }
 

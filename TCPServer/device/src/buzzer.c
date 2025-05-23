@@ -8,6 +8,8 @@
 #include <wiringPi.h>
 #include <softTone.h>
 
+#include "logger.h"
+
 #define BZR 29 //pin
 
 void buzzerMain(int write_fd, int read_fd)
@@ -28,7 +30,7 @@ void buzzerMain(int write_fd, int read_fd)
     while (1)
     {
         //명령어를 받는 부분
-        if (millis() - nowtime > 0)
+        if (millis() - nowtime > 200)
         {
             ssize_t n = read(read_fd, buffer, sizeof(buffer) - 1);
             if (n > 0)
@@ -41,10 +43,16 @@ void buzzerMain(int write_fd, int read_fd)
                     {
                     case '0':
                         gopause = false;
+                        log_init(LOG_FILE_PATH);
+                        log_message(LOG_LEVEL_INFO, "BUZZER OFF");
+                        log_close();
                         break;
 
                     case '1':
                         gopause = true;
+                        log_init(LOG_FILE_PATH);
+                        log_message(LOG_LEVEL_INFO, "BUZZER ON");
+                        log_close();
                         break;
                     }
                 }

@@ -11,8 +11,10 @@
 #include <sys/epoll.h>
 #include <signal.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "parser.h"
+#include "logger.h"
 
 #define TIMEOUT_SECONDS 30
 #define MAX_CLIENTS 1024
@@ -157,6 +159,8 @@ static void remove_client_session(int fd)
 
 void handle_new_connection(int efd, int lfd)
 {
+    log_init(LOG_FILE_PATH);
+    
     struct sockaddr_in client_addr;
     socklen_t addrlen = sizeof(client_addr);
 
@@ -169,6 +173,8 @@ void handle_new_connection(int efd, int lfd)
 
     printf("클라이언트 연결됨: %s:%d\n",
            inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+    log_message(LOG_LEVEL_INFO, "클라이언트 연결됨: %s:%d",
+           inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
     set_nonblocking(client_fd);
 
@@ -180,10 +186,13 @@ void handle_new_connection(int efd, int lfd)
     {
         perror("epoll_ctl() - client_fd");
         close(client_fd);
+        log_close();
         return;
     }
 
     add_client_session(client_fd); // 활동 시간 등록
+
+    log_close();
 }
 
 /*Action!!*/
@@ -191,14 +200,19 @@ void handle_client_data(int efd, int client_fd, char* cntrl) {
     char buffer[BUFSIZE];
     int len = recvStrTCPIP(client_fd, buffer, BUFSIZE);
 
+    log_init(LOG_FILE_PATH);
+
     if (len <= 0) {
         if (len < 0) perror("recv()");
         else printf("클라이언트 종료됨 (fd: %d)\n", client_fd);
+
+        log_message(LOG_LEVEL_INFO, "클라이언트 종료됨 (fd: %d)", client_fd);
 
         for (int i = 0; i < MAX_CLIENTS; ++i) {
             if(clients[i].fd == client_fd 
                 && strcmp(clients[i].userid, authorized_userid) == 0){
                     printf("authorized_userid 초기화됨 (unconnected)\n");
+                    log_message(LOG_LEVEL_INFO, "authorized_userid 초기화됨 (unconnected)");
                     memset(authorized_userid, 0, sizeof(authorized_userid));
                     break;
             }
@@ -207,6 +221,7 @@ void handle_client_data(int efd, int client_fd, char* cntrl) {
         epoll_ctl(efd, EPOLL_CTL_DEL, client_fd, NULL);
         close(client_fd);
         remove_client_session(client_fd);
+        log_close();
         return;
     }
 
@@ -233,23 +248,29 @@ void handle_client_data(int efd, int client_fd, char* cntrl) {
 
         printf("state : %c%c%c\r\n", 
             cntrl[0],cntrl[1],cntrl[2]);
+        log_message(LOG_LEVEL_INFO, "AUTHORIZED:%s", buffer);
 
         extern char g_daynight;
         if(g_daynight == 'd'){
             sendStrTCPIP(client_fd, "Day"); // Echo
+            log_message(LOG_LEVEL_INFO, "SEVER>CLIENT:DAY");
         }
         else{
             sendStrTCPIP(client_fd, "Night"); // Echo
+            log_message(LOG_LEVEL_INFO, "SEVER>CLIENT:NIGHT");
         }
         
         //fork(p - tcp server), (c - device), messageque
 
     } else {
         const char *msg = "현재 기기 사용 중입니다. 나중에 이용해주세요.\n";
+        log_message(LOG_LEVEL_INFO, 
+            "%s REJECTED(AUTHORIZED : %s)", userid, authorized_userid);
         sendStrTCPIP(client_fd, msg);
     }
 
     freeTokens(tokens, count);
+    log_close();
 }
 
 int sendStrTCPIP(int sockfd, const char *msg)
@@ -294,6 +315,8 @@ void signal_handler(int sig) {
 
 void check_timeouts(int efd)
 {
+    log_init(LOG_FILE_PATH);
+
     time_t now = time(NULL);
     for (int i = 0; i < MAX_CLIENTS; ++i)
     {
@@ -301,6 +324,7 @@ void check_timeouts(int efd)
         {
             int fd = clients[i].fd;
             printf("타임아웃 발생: 클라이언트(fd: %d, userid: %s) 연결 해제\n", fd, clients[i].userid);
+            log_message(LOG_LEVEL_INFO, "타임아웃 발생: 클라이언트(fd: %d, userid: %s) 연결 해제",fd, clients[i].userid);
 
             epoll_ctl(efd, EPOLL_CTL_DEL, fd, NULL);
             close(fd);
@@ -308,10 +332,13 @@ void check_timeouts(int efd)
             if (strcmp(clients[i].userid, authorized_userid) == 0)
             {
                 printf("authorized_userid 초기화됨 (timeout 발생)\n");
+                log_message(LOG_LEVEL_INFO, "authorized_userid 초기화됨 (timeout 발생)");
                 memset(authorized_userid, 0, sizeof(authorized_userid));
             }
 
             remove_client_session(fd);
         }
     }
+
+    log_close();
 }
